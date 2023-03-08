@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
@@ -71,7 +72,9 @@ public class FileChannelGetTest
         }
 
 
-        //第二种方法，通过 FileInputStream 获取
+
+
+        //第二种方法，通过 FileOutputStream 获取
         try (FileOutputStream fileOutputStream = new FileOutputStream("test.txt"))
         {
             FileChannel fileChannel = fileOutputStream.getChannel();
@@ -115,5 +118,46 @@ public class FileChannelGetTest
 
 
 
+       //第三种方法，通过 FileInputStream 获取
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile("test.txt","rw"))
+        {
+            FileChannel fileChannel = randomAccessFile.getChannel();
+            log.debug(fileChannel.toString());
+            //尝试读
+            ByteBuffer byteBuffer = ByteBuffer.allocate(10);
+            try
+            {
+                fileChannel.read(byteBuffer);
+                byteBuffer.flip();
+                byte b = byteBuffer.get(2);
+                log.debug(String.valueOf((char) b));
+                //打印
+                ByteBufferUtil.debugAll(byteBuffer);
+            }
+            catch (Exception e)
+            {
+                log.error("读失败：", e);
+            }
+
+            //尝试写
+            byteBuffer.clear();
+            byteBuffer.put("abcdefg".getBytes(StandardCharsets.UTF_8));
+            //打印
+            ByteBufferUtil.debugAll(byteBuffer);
+            try
+            {
+                //切换读模式
+                byteBuffer.flip();
+                fileChannel.write(byteBuffer);
+            }
+            catch (Exception e)
+            {
+                log.error("写入失败：", e);
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
     }
 }
